@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  email String @id
+  password String
+  firstname String
+  lastname String
+  isGoogleAccount Boolean @default(false)
+  role Role @default(USER)
+  sessions Session[]
+  createdTickets Ticket[]
+  tickets TicketMembers[]
+  messages Message[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Session {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [email])
+  userId String
+}
+
+model Ticket {
+  id Int @id @default(autoincrement())
+  creator User @relation(fields: [creatorId], references: [email])
+  creatorId String
+  members TicketMembers[]
+  accessToken String
+  subject String
+  severity Severity
+  description String
+  messages Message[]
+}
+
+enum Severity {
+  NOT_SEVERE
+  SEVERE
+  URGENT
+}
+
+model TicketMembers {
+  member User @relation(fields: [memberId], references: [email])
+  memberId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  ticketId Int
+  @@id([memberId, ticketId])
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  sender User @relation(fields: [senderId], references: [email])
+  senderId String
+  content String
+  timeSent DateTime @default(now())
+  ticket Ticket @relation(fields: [ticketId], references: [id]) 
+  ticketId Int
+}
